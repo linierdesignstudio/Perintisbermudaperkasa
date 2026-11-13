@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-size: clamp(15px, calc(14.5px + 0.1vw), 16px);
+}
+
+@media (max-width: 767px) {
+  html {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.page-gutter {
+  padding-inline: clamp(1.125rem, 4.5vw, 4rem);
+}
+
+.nav-shell {
+  width: calc(100% - 2 * clamp(1.5rem, 4.5vw, 4rem));
+  margin-inline: auto;
+}
+
+.product-stack-card {
+  top: calc(5rem + var(--stack-offset, 0rem));
+}
+
+@media (min-width: 768px) {
+  .product-stack-card {
+    top: calc(1.5rem + var(--stack-offset, 0rem));
+  }
+}
+
+.preloader-sweep {
+  animation: preloader-sweep 1.3s ease-in-out infinite;
+}
+
+.preloader-logo-reveal {
+  animation: preloader-logo-reveal 1.4s ease-out both;
+}
+
+@keyframes preloader-logo-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes preloader-sweep {
+  from {
+    transform: translateX(-110%);
+  }
+
+  to {
+    transform: translateX(310%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader-logo-reveal {
+    animation-duration: 0.01ms;
+  }
+
+  .preloader-sweep {
+    animation-duration: 2.8s;
+  }
+}
+
+.font-fun {
+  font-family: "Inter", sans-serif !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+}
+
+@media print {
+  header,
+  footer,
+  .print\:hidden,
+  #contact,
+  nav {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}
