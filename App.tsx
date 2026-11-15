@@ -267,7 +267,6 @@ function App() {
         timeZone: zone, 
         hour: '2-digit', 
         minute: '2-digit',
-        second: '2-digit',
         hour12: false 
       });
 
@@ -278,7 +277,7 @@ function App() {
       });
     };
     updateTime();
-    const interval = setInterval(updateTime, 1000); // Update every second for blinking effect preference
+    const interval = setInterval(updateTime, 60_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1507,21 +1506,17 @@ function App() {
                   className="flex flex-col items-start lg:items-end gap-10 mb-2 w-full lg:w-auto rtl:lg:items-start"
                >
                    
-                   {/* WORLD CLOCKS - FUN FONT 'SYNE' */}
-                   <div className="mb-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
+                   <div className="mb-2 grid w-full grid-cols-1 divide-y divide-brand-800/50 border-y border-brand-800/50 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                       {[
-                        { city: t.footer.worldClock.wita, time: worldTimes.wita, code: 'ID' },
-                        { city: t.footer.worldClock.wit, time: worldTimes.wit, code: 'ID' },
-                        { city: t.footer.worldClock.wib, time: worldTimes.wib, code: 'ID' }
-                      ].map((clock, idx) => (
-                        <div key={idx} className="flex items-center gap-3 rounded-2xl border border-brand-800 bg-brand-900/50 px-4 py-3 backdrop-blur-sm transition-colors hover:border-brand-600 sm:rounded-full sm:px-6 sm:py-4">
-                           <div className="flex flex-col">
-                              <span className="text-[10px] font-mono text-brand-300 uppercase tracking-widest leading-none mb-2">{clock.city}</span>
-                              <span className="font-fun text-xl font-bold text-white tabular-nums leading-none tracking-tight sm:text-2xl">
-                                 {clock.time}
-                              </span>
-                           </div>
-                           <div className="hidden">🇮🇩</div>
+                        { city: t.footer.worldClock.wita, time: worldTimes.wita },
+                        { city: t.footer.worldClock.wit, time: worldTimes.wit },
+                        { city: t.footer.worldClock.wib, time: worldTimes.wib }
+                      ].map((clock) => (
+                        <div key={clock.city} className="flex items-center justify-between gap-4 py-3 sm:flex-col sm:items-start sm:gap-1 sm:px-4 sm:py-4">
+                           <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-brand-300">{clock.city}</span>
+                           <time className="font-mono text-lg font-medium leading-none tracking-tight text-white tabular-nums sm:text-xl">
+                              {clock.time}
+                           </time>
                         </div>
                       ))}
                    </div>
