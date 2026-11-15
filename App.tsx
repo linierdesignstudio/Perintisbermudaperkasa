@@ -1024,7 +1024,7 @@ function App() {
           </header>
 
           {/* OVERLAPPING SCROLL CONTAINER */}
-          <div className="relative z-10 pt-[35vh] md:pt-[20vh]">
+          <div className="relative z-10 pt-[12vh] md:pt-[20vh]">
              <div className="overflow-hidden bg-zinc-950 text-white">
                 <div className="hidden items-center justify-between gap-6 py-3 sm:flex">
                    <span className="text-[9px] font-semibold uppercase tracking-[0.24em] text-brand-200 md:text-[10px]">
