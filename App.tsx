@@ -1598,7 +1598,7 @@ function App() {
 
          {/* Giant Background Typography */}
          <div className="relative left-1/2 mt-12 w-screen -translate-x-1/2 select-none pointer-events-none">
-            <h1 className="whitespace-nowrap text-[clamp(3rem,19vw,24rem)] font-black leading-none text-center text-[#0b3d54] group-hover:text-[#0c4a6e] transition-colors duration-700 tracking-tighter">
+            <h1 className="whitespace-nowrap text-[24vw] font-black leading-none text-center text-[#0b3d54] group-hover:text-[#0c4a6e] transition-colors duration-700 tracking-tighter">
                PERINTIS
             </h1>
          </div>
