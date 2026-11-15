@@ -267,6 +267,7 @@ function App() {
         timeZone: zone, 
         hour: '2-digit', 
         minute: '2-digit',
+        second: '2-digit',
         hour12: false 
       });
 
@@ -277,7 +278,7 @@ function App() {
       });
     };
     updateTime();
-    const interval = setInterval(updateTime, 60_000);
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1511,14 +1512,19 @@ function App() {
                         { city: t.footer.worldClock.wita, time: worldTimes.wita },
                         { city: t.footer.worldClock.wit, time: worldTimes.wit },
                         { city: t.footer.worldClock.wib, time: worldTimes.wib }
-                      ].map((clock) => (
-                        <div key={clock.city} className="flex items-center justify-between gap-4 py-3 sm:flex-col sm:items-start sm:gap-1 sm:px-4 sm:py-4">
-                           <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-brand-300">{clock.city}</span>
-                           <time className="font-mono text-lg font-medium leading-none tracking-tight text-white tabular-nums sm:text-xl">
-                              {clock.time}
-                           </time>
-                        </div>
-                      ))}
+                      ].map((clock) => {
+                        const [hours, minutes, seconds] = clock.time.split(':');
+
+                        return (
+                          <div key={clock.city} className="flex items-center justify-between gap-4 py-3 sm:flex-col sm:items-start sm:gap-1 sm:px-4 sm:py-4">
+                             <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-brand-300">{clock.city}</span>
+                             <time dateTime={clock.time} className="font-mono text-2xl font-medium leading-none tracking-tight text-white tabular-nums sm:text-3xl">
+                                <span>{hours}:{minutes}</span>
+                                <span className="text-sm font-normal tracking-normal text-brand-300 sm:text-base">:{seconds}</span>
+                             </time>
+                          </div>
+                        );
+                      })}
                    </div>
 
                    <div className="flex flex-col md:flex-row gap-6 items-center w-full lg:w-auto">
