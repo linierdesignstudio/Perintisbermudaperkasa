@@ -938,7 +938,7 @@ function App() {
       ) : (
         <>
           {/* SPECTACULAR FULL-BLEED HERO SECTION */}
-          <header className="sticky top-0 z-0 isolate pt-28 md:pt-48 pb-16 md:pb-36 page-gutter overflow-hidden min-h-[90svh] md:min-h-screen flex flex-col justify-center transition-colors duration-500">
+          <header className="sticky top-0 z-0 isolate pt-28 md:pt-48 pb-8 md:pb-36 page-gutter overflow-hidden min-h-[90svh] md:min-h-screen flex flex-col justify-center transition-colors duration-500">
              
              {/* Full Bleed Hero Background Image with Dual Scrims */}
              <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
@@ -1024,7 +1024,7 @@ function App() {
           </header>
 
           {/* OVERLAPPING SCROLL CONTAINER */}
-          <div className="relative z-10 pt-[12vh] md:pt-[20vh]">
+          <div className="relative z-10 pt-8 md:pt-[20vh]">
              <div className="overflow-hidden bg-zinc-950 text-white">
                 <div className="hidden items-center justify-between gap-6 py-3 sm:flex">
                    <span className="text-[9px] font-semibold uppercase tracking-[0.24em] text-brand-200 md:text-[10px]">
