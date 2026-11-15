@@ -962,17 +962,6 @@ function App() {
              <div className="w-full relative z-10">
                 <div className="max-w-5xl relative">
                    
-                   {/* Badge */}
-                   <motion.div 
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6 }}
-                      className="inline-flex items-center gap-1.5 sm:gap-3 mb-4 md:mb-8 pl-1 pr-2.5 sm:pr-4 py-0.5 sm:py-1 rounded-full border border-zinc-200/80 dark:border-white/15 bg-white/60 dark:bg-black/40 backdrop-blur-md shadow-sm"
-                   >
-                      <div className="px-1.5 py-0.5 sm:px-2.5 rounded-full bg-brand-500 text-white text-[8px] sm:text-[10px] font-bold uppercase tracking-wider">PBP</div>
-                      <span className="text-[9px] sm:text-xs font-bold uppercase tracking-[0.08em] sm:tracking-widest text-zinc-700 dark:text-zinc-300">{t.hero.badge}</span>
-                   </motion.div>
-
                    {/* Massive Typography */}
                    <motion.h1 
                       initial={{ opacity: 0, y: 25 }}
