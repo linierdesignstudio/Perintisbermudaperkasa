@@ -1014,7 +1014,8 @@ function App() {
                             ? "Kami memulai setiap kunjungan kapal dengan memahami kebutuhan operasionalnya, menyiapkan koordinasi yang diperlukan, dan menjaga komunikasi dengan pihak-pihak terkait."
                             : "We start each port call by understanding its operational requirements, preparing the necessary arrangements, and keeping communication clear among the parties involved."
                          }
-                         className="text-white text-sm sm:text-lg md:text-lg font-medium leading-relaxed max-w-3xl block [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]"
+                         disabledOnMobile
+                         className="text-white text-sm sm:text-lg md:text-lg font-medium leading-relaxed max-w-3xl block w-full sm:w-auto pr-16 sm:pr-0 [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]"
                       />
                    </motion.div>
 
