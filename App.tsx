@@ -938,7 +938,7 @@ function App() {
       ) : (
         <>
           {/* SPECTACULAR FULL-BLEED HERO SECTION */}
-          <header className="sticky top-0 z-0 isolate pt-28 md:pt-48 pb-0 md:pb-36 page-gutter overflow-hidden min-h-[90svh] md:min-h-screen flex flex-col justify-center transition-colors duration-500">
+          <header className="sticky top-0 z-0 isolate pt-28 md:pt-48 pb-[35vh] md:pb-36 page-gutter overflow-hidden min-h-[90svh] md:min-h-screen flex flex-col justify-center transition-colors duration-500">
              
              {/* Full Bleed Hero Background Image with Dual Scrims */}
              <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
@@ -1014,7 +1014,6 @@ function App() {
                             ? "Kami memulai setiap kunjungan kapal dengan memahami kebutuhan operasionalnya, menyiapkan koordinasi yang diperlukan, dan menjaga komunikasi dengan pihak-pihak terkait."
                             : "We start each port call by understanding its operational requirements, preparing the necessary arrangements, and keeping communication clear among the parties involved."
                          }
-                         disabledOnMobile
                          className="text-white text-sm sm:text-lg md:text-lg font-medium leading-relaxed max-w-3xl block w-full sm:w-auto pr-16 sm:pr-0 [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]"
                       />
                    </motion.div>
