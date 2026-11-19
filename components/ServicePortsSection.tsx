@@ -81,14 +81,44 @@ const ServicePortsSection: React.FC<ServicePortsSectionProps> = ({ lang }) => {
           signal: controller.signal,
         });
         const result: unknown = await response.json();
-        if (!response.ok) {
-          const message =
-            typeof result === 'object' && result !== null && 'error' in result && typeof result.error === 'string'
-              ? result.error
-              : 'Weather data is temporarily unavailable.';
-          throw new Error(message);
+        if (response.ok) {
+          setWeather(result as PortWeather);
+          return;
         }
-        setWeather(result as PortWeather);
+
+        const directUrl = new URL('https://api.open-meteo.com/v1/forecast');
+        directUrl.searchParams.set('latitude', String(selectedPort.latitude));
+        directUrl.searchParams.set('longitude', String(selectedPort.longitude));
+        directUrl.searchParams.set('current', [
+          'temperature_2m',
+          'relative_humidity_2m',
+          'apparent_temperature',
+          'is_day',
+          'precipitation',
+          'weather_code',
+          'wind_speed_10m',
+          'wind_direction_10m',
+        ].join(','));
+        directUrl.searchParams.set('timezone', 'auto');
+
+        const directResponse = await fetch(directUrl.toString(), {
+          signal: controller.signal,
+        });
+        if (!directResponse.ok) throw new Error('Direct weather service request failed.');
+
+        const directResult: unknown = await directResponse.json();
+        if (
+          typeof directResult !== 'object'
+          || directResult === null
+          || !('current' in directResult)
+          || typeof directResult.current !== 'object'
+          || directResult.current === null
+        ) {
+          throw new Error('The direct weather service returned an invalid response.');
+        }
+
+        const directWeather = directResult.current as PortWeather;
+        setWeather(directWeather);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         console.error('Unable to load port weather:', error);
