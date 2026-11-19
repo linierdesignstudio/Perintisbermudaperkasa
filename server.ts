@@ -1,6 +1,6 @@
 import express from "express";
 import path from "path";
-import { getLocationName, postChat } from "./apiHandlers";
+import { getLocationName, getPortWeather, postChat } from "./apiHandlers";
 
 async function startServer() {
   const app = express();
@@ -14,6 +14,11 @@ async function startServer() {
 
   app.get("/api/location-name", async (req, res) => {
     const result = await getLocationName(req.query.lat, req.query.lon, req.query.lang);
+    res.status(result.status).json(result.body);
+  });
+
+  app.get("/api/port-weather", async (req, res) => {
+    const result = await getPortWeather(req.query.lat, req.query.lon, req.query.lang);
     res.status(result.status).json(result.body);
   });
 

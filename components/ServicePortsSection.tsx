@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowUpRight, Loader2, MapPin, Navigation, RefreshCw, Ship } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowUpRight, Cloud, CloudRain, CloudSun, Droplets, Loader2, MapPin, Navigation, RefreshCw, Ship, Sun, Wind } from 'lucide-react';
 import { Language } from '../types';
 
 interface ServicePortsSectionProps {
@@ -7,13 +7,47 @@ interface ServicePortsSectionProps {
 }
 
 const servicePorts = [
-  { name: 'Pelabuhan Kendari', location: 'Kendari, Sulawesi Tenggara, Indonesia' },
-  { name: 'Pelabuhan Kolaka', location: 'Kolaka, Sulawesi Tenggara, Indonesia' },
-  { name: 'Pelabuhan / Jetty Pomalaa', location: 'Pomalaa, Kolaka, Sulawesi Tenggara, Indonesia' },
-  { name: 'Pelabuhan Baubau', location: 'Baubau, Sulawesi Tenggara, Indonesia' },
-  { name: 'Pelabuhan Makassar', location: 'Makassar, Sulawesi Selatan, Indonesia' },
-  { name: 'Jetty Morosi', location: 'Morosi, Konawe, Sulawesi Tenggara, Indonesia' },
+  { name: 'Pelabuhan Kendari', location: 'Kendari, Sulawesi Tenggara, Indonesia', latitude: -3.9975, longitude: 122.512 },
+  { name: 'Pelabuhan Kolaka', location: 'Kolaka, Sulawesi Tenggara, Indonesia', latitude: -4.047, longitude: 121.618 },
+  { name: 'Pelabuhan / Jetty Pomalaa', location: 'Pomalaa, Kolaka, Sulawesi Tenggara, Indonesia', latitude: -4.185, longitude: 121.608 },
+  { name: 'Pelabuhan Baubau', location: 'Baubau, Sulawesi Tenggara, Indonesia', latitude: -5.467, longitude: 122.598 },
+  { name: 'Pelabuhan Makassar', location: 'Makassar, Sulawesi Selatan, Indonesia', latitude: -5.147, longitude: 119.413 },
+  { name: 'Jetty Morosi', location: 'Morosi, Konawe, Sulawesi Tenggara, Indonesia', latitude: -3.978, longitude: 122.326 },
 ];
+
+interface PortWeather {
+  temperature_2m?: number;
+  relative_humidity_2m?: number;
+  apparent_temperature?: number;
+  is_day?: number;
+  precipitation?: number;
+  weather_code?: number;
+  wind_speed_10m?: number;
+  wind_direction_10m?: number;
+  time?: string;
+  timezone?: string;
+}
+
+const getWeatherDescription = (code: number | undefined, isIndonesian: boolean) => {
+  if (code === undefined) return isIndonesian ? 'Cuaca tidak tersedia' : 'Weather unavailable';
+  if (code === 0) return isIndonesian ? 'Cerah' : 'Clear';
+  if (code <= 3) return isIndonesian ? 'Berawan' : 'Cloudy';
+  if (code <= 48) return isIndonesian ? 'Berembun' : 'Foggy';
+  if (code <= 57) return isIndonesian ? 'Gerimis' : 'Drizzle';
+  if (code <= 67) return isIndonesian ? 'Hujan' : 'Rain';
+  if (code <= 77) return isIndonesian ? 'Bersalju' : 'Snow';
+  if (code <= 82) return isIndonesian ? 'Hujan lebat' : 'Heavy rain';
+  if (code <= 86) return isIndonesian ? 'Hujan es' : 'Snow showers';
+  return isIndonesian ? 'Badai petir' : 'Thunderstorm';
+};
+
+const WeatherIcon: React.FC<{ code: number | undefined; isDay: number | undefined }> = ({ code, isDay }) => {
+  if (code === 0) return isDay ? <Sun size={26} aria-hidden="true" /> : <Cloud size={26} aria-hidden="true" />;
+  if (code !== undefined && code >= 51 && code <= 82) return <CloudRain size={26} aria-hidden="true" />;
+  if (code !== undefined && code >= 95) return <CloudRain size={26} aria-hidden="true" />;
+  if (code !== undefined && code <= 3) return <CloudSun size={26} aria-hidden="true" />;
+  return <Cloud size={26} aria-hidden="true" />;
+};
 
 const ServicePortsSection: React.FC<ServicePortsSectionProps> = ({ lang }) => {
   const [selectedPortIndex, setSelectedPortIndex] = useState(0);
@@ -23,8 +57,53 @@ const ServicePortsSection: React.FC<ServicePortsSectionProps> = ({ lang }) => {
   const [locationName, setLocationName] = useState('');
   const [locationMessage, setLocationMessage] = useState('');
   const [mapVersion, setMapVersion] = useState(0);
+  const [weather, setWeather] = useState<PortWeather | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const [weatherError, setWeatherError] = useState('');
+  const [weatherVersion, setWeatherVersion] = useState(0);
   const isIndonesian = lang === 'ID';
   const selectedPort = servicePorts[selectedPortIndex];
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadWeather = async () => {
+      setIsLoadingWeather(true);
+      setWeatherError('');
+      const params = new URLSearchParams({
+        lat: String(selectedPort.latitude),
+        lon: String(selectedPort.longitude),
+        lang,
+      });
+
+      try {
+        const response = await fetch(`/api/port-weather?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const result: unknown = await response.json();
+        if (!response.ok) {
+          const message =
+            typeof result === 'object' && result !== null && 'error' in result && typeof result.error === 'string'
+              ? result.error
+              : 'Weather data is temporarily unavailable.';
+          throw new Error(message);
+        }
+        setWeather(result as PortWeather);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        console.error('Unable to load port weather:', error);
+        setWeather(null);
+        setWeatherError(isIndonesian
+          ? 'Cuaca lokasi saat ini belum dapat dimuat.'
+          : 'Current location weather could not be loaded.');
+      } finally {
+        if (!controller.signal.aborted) setIsLoadingWeather(false);
+      }
+    };
+
+    void loadWeather();
+    return () => controller.abort();
+  }, [lang, selectedPort.latitude, selectedPort.longitude, weatherVersion, isIndonesian]);
 
   const mapUrl = new URL('https://maps.google.com/maps');
   mapUrl.searchParams.set('q', `${selectedPort.name}, ${selectedPort.location}`);
@@ -237,6 +316,93 @@ const ServicePortsSection: React.FC<ServicePortsSectionProps> = ({ lang }) => {
               </p>
             )}
 
+            <div className="mt-6 border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                  {isIndonesian ? 'Cuaca lokasi saat ini' : 'Current location weather'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setWeatherVersion((version) => version + 1)}
+                  disabled={isLoadingWeather}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-wait disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                  aria-label={isIndonesian ? 'Perbarui cuaca' : 'Refresh weather'}
+                  title={isIndonesian ? 'Perbarui cuaca' : 'Refresh weather'}
+                >
+                  {isLoadingWeather
+                    ? <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                    : <RefreshCw size={14} aria-hidden="true" />}
+                </button>
+              </div>
+
+              {isLoadingWeather && !weather ? (
+                <div className="mt-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                  {isIndonesian ? 'Memuat cuaca…' : 'Loading weather…'}
+                </div>
+              ) : weatherError ? (
+                <p className="mt-4 text-xs leading-5 text-zinc-500 dark:text-zinc-400" role="status">{weatherError}</p>
+              ) : weather ? (
+                <div className="mt-4" aria-live="polite">
+                  <div className="flex items-end justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-brand-800 dark:text-brand-200">
+                        <WeatherIcon code={weather.weather_code} isDay={weather.is_day} />
+                      </span>
+                      <div>
+                        <p className="text-2xl font-semibold tracking-[-0.03em] text-zinc-950 dark:text-white">
+                          {typeof weather.temperature_2m === 'number'
+                            ? `${Math.round(weather.temperature_2m)}°C`
+                            : '—'}
+                        </p>
+                        <p className="mt-0.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                          {getWeatherDescription(weather.weather_code, isIndonesian)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-right text-[10px] leading-4 text-zinc-500 dark:text-zinc-400">
+                      {isIndonesian ? 'Terasa seperti' : 'Feels like'}<br />
+                      <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+                        {typeof weather.apparent_temperature === 'number'
+                          ? `${Math.round(weather.apparent_temperature)}°C`
+                          : '—'}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                    <div className="text-[10px] leading-4 text-zinc-500 dark:text-zinc-400">
+                      <Wind size={13} className="mb-1 text-zinc-600 dark:text-zinc-300" aria-hidden="true" />
+                      {isIndonesian ? 'Angin' : 'Wind'}<br />
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                        {typeof weather.wind_speed_10m === 'number'
+                          ? `${Math.round(weather.wind_speed_10m)} km/h`
+                          : '—'}
+                      </span>
+                    </div>
+                    <div className="text-[10px] leading-4 text-zinc-500 dark:text-zinc-400">
+                      <Droplets size={13} className="mb-1 text-zinc-600 dark:text-zinc-300" aria-hidden="true" />
+                      {isIndonesian ? 'Lembap' : 'Humidity'}<br />
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                        {typeof weather.relative_humidity_2m === 'number'
+                          ? `${Math.round(weather.relative_humidity_2m)}%`
+                          : '—'}
+                      </span>
+                    </div>
+                    <div className="text-[10px] leading-4 text-zinc-500 dark:text-zinc-400">
+                      <CloudRain size={13} className="mb-1 text-zinc-600 dark:text-zinc-300" aria-hidden="true" />
+                      {isIndonesian ? 'Curah hujan' : 'Rain'}<br />
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                        {typeof weather.precipitation === 'number'
+                          ? `${weather.precipitation} mm`
+                          : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
             <div className="mt-8 border-t border-zinc-300 pt-5 dark:border-zinc-700">
               <div className="flex items-start gap-3">
                 <Ship size={18} className="mt-0.5 shrink-0 text-brand-800 dark:text-brand-200" aria-hidden="true" />
@@ -286,8 +452,8 @@ const ServicePortsSection: React.FC<ServicePortsSectionProps> = ({ lang }) => {
 
         <p className="mt-7 max-w-5xl text-[11px] leading-5 text-zinc-500 dark:text-zinc-500">
           {isIndonesian
-            ? <>Izin lokasi hanya diminta setelah tombol lokasi dipilih. Untuk menampilkan nama daerah, koordinat dikirim ke server PBP dan OpenStreetMap; hasil pencarian disimpan sementara di memori server. Koordinat juga digunakan untuk membuat rute di Google Maps. Nama area bergantung pada data peta yang tersedia dan tidak selalu menunjukkan titik sandar yang tepat. Data peta © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300">OpenStreetMap contributors</a>. MarineTraffic adalah layanan eksternal; ketersediaan dan keterkinian data AIS mengikuti MarineTraffic.</>
-            : <>Location access is requested only after selecting the location button. To show the area name, coordinates are sent to PBP’s server and OpenStreetMap; lookup results are temporarily cached in server memory. Coordinates are also used to create directions in Google Maps. Area names depend on available map data and may not identify the exact berth. Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300">OpenStreetMap contributors</a>. MarineTraffic is an external service; AIS data availability and freshness are determined by MarineTraffic.</>}
+            ? <>Izin lokasi hanya diminta setelah tombol lokasi dipilih. Untuk menampilkan nama daerah, koordinat dikirim ke server PBP dan OpenStreetMap; hasil pencarian disimpan sementara di memori server. Koordinat juga digunakan untuk membuat rute di Google Maps. Nama area bergantung pada data peta yang tersedia dan tidak selalu menunjukkan titik sandar yang tepat. Data cuaca diminta ke Open-Meteo melalui server PBP dan disimpan sementara selama 10 menit. Data peta © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300">OpenStreetMap contributors</a>. MarineTraffic adalah layanan eksternal; ketersediaan dan keterkinian data AIS mengikuti MarineTraffic.</>
+            : <>Location access is requested only after selecting the location button. To show the area name, coordinates are sent to PBP’s server and OpenStreetMap; lookup results are temporarily cached in server memory. Coordinates are also used to create directions in Google Maps. Area names depend on available map data and may not identify the exact berth. Weather data is requested from Open-Meteo through PBP’s server and temporarily cached for 10 minutes. Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300">OpenStreetMap contributors</a>. MarineTraffic is an external service; AIS data availability and freshness are determined by MarineTraffic.</>}
         </p>
       </div>
     </section>

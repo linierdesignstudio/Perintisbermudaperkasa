@@ -1,11 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 import { PBP_CUSTOMER_SUPPORT_KNOWLEDGE } from "./customerSupportKnowledge";
 
-type ApiBody = Record<string, string>;
-
 export interface ApiResult {
   status: number;
-  body: ApiBody;
+  body: Record<string, unknown>;
 }
 
 interface ChatMessage {
@@ -14,8 +12,90 @@ interface ChatMessage {
 }
 
 const reverseGeocodeCache = new Map<string, { name: string; expiresAt: number }>();
+const weatherCache = new Map<string, { data: Record<string, unknown>; expiresAt: number }>();
 let nominatimQueue = Promise.resolve();
 let lastNominatimRequestAt = 0;
+
+export async function getPortWeather(
+  latitudeValue: unknown,
+  longitudeValue: unknown,
+  languageValue: unknown,
+): Promise<ApiResult> {
+  const latitude = typeof latitudeValue === "string" ? Number(latitudeValue) : NaN;
+  const longitude = typeof longitudeValue === "string" ? Number(longitudeValue) : NaN;
+  const language = languageValue === "EN" ? "EN" : "ID";
+
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return { status: 400, body: { error: "Provide valid latitude and longitude coordinates." } };
+  }
+
+  const cacheKey = `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+  const cachedWeather = weatherCache.get(cacheKey);
+  if (cachedWeather && cachedWeather.expiresAt > Date.now()) {
+    return { status: 200, body: cachedWeather.data };
+  }
+  if (cachedWeather) weatherCache.delete(cacheKey);
+
+  const url = new URL("https://api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude", String(latitude));
+  url.searchParams.set("longitude", String(longitude));
+  url.searchParams.set("current", [
+    "temperature_2m",
+    "relative_humidity_2m",
+    "apparent_temperature",
+    "is_day",
+    "precipitation",
+    "weather_code",
+    "wind_speed_10m",
+    "wind_direction_10m",
+  ].join(","));
+  url.searchParams.set("timezone", "auto");
+
+  try {
+    const response = await fetch(url, {
+      headers: { "Accept": "application/json" },
+    });
+    if (!response.ok) {
+      console.error("Open-Meteo weather request failed:", response.status);
+      return { status: 502, body: { error: "Weather data is temporarily unavailable." } };
+    }
+
+    const result: unknown = await response.json();
+    if (
+      typeof result !== "object" ||
+      result === null ||
+      !("current" in result) ||
+      typeof result.current !== "object" ||
+      result.current === null
+    ) {
+      console.error("Open-Meteo weather returned an invalid response.");
+      return { status: 502, body: { error: "The weather service returned an invalid response." } };
+    }
+
+    const weatherData = {
+      ...result.current as Record<string, unknown>,
+      timezone: "timezone" in result && typeof result.timezone === "string" ? result.timezone : "",
+      language,
+    };
+
+    if (weatherCache.size >= 100) {
+      const oldestCacheKey = weatherCache.keys().next().value;
+      if (oldestCacheKey) weatherCache.delete(oldestCacheKey);
+    }
+    weatherCache.set(cacheKey, { data: weatherData, expiresAt: Date.now() + 10 * 60 * 1000 });
+    return { status: 200, body: weatherData };
+  } catch (error) {
+    console.error("Open-Meteo weather request failed:", error);
+    return { status: 502, body: { error: "Weather data is temporarily unavailable." } };
+  }
+}
 
 export async function getLocationName(
   latitudeValue: unknown,
